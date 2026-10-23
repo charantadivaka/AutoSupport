@@ -1,0 +1,32 @@
+{
+  "name": "ai-customer-support-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Production-Style AI Customer Support Automation Platform with RAG, pgvector, and Human Escalation",
+  "scripts": {
+    "start:backend": "npm --prefix backend run start:dev",
+    "start:frontend": "npm --prefix frontend run dev",
+    "build:backend": "npm --prefix backend run build",
+    "build:frontend": "npm --prefix frontend run build",
+    "build": "npm run build:backend && npm run build:frontend",
+    "test:backend": "npm --prefix backend test",
+    "test": "npm run test:backend",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "prisma:generate": "npm --prefix backend run prisma:generate",
+    "prisma:migrate": "npm --prefix backend run prisma:migrate",
+    "prisma:studio": "npm --prefix backend run prisma:studio"
+  },
+  "keywords": [
+    "gen-ai",
+    "rag",
+    "pgvector",
+    "nestjs",
+    "nextjs",
+    "typescript",
+    "prisma",
+    "customer-support"
+  ],
+  "author": "Engineering Candidate",
+  "license": "UNLICENSED"
+}

@@ -1,0 +1,102 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: autosupport-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: autosupport
+      POSTGRES_PASSWORD: autosupport_dev_password
+      POSTGRES_DB: autosupport_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U autosupport -d autosupport_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - autosupport-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: autosupport-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - autosupport-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: autosupport-backend
+    restart: always
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: 4000
+      NODE_ENV: production
+      DATABASE_URL: postgresql://autosupport:autosupport_dev_password@postgres:5432/autosupport_db?schema=public
+      REDIS_URL: redis://redis:6379
+      FRONTEND_URL: http://localhost:3000
+      JWT_SECRET: ${JWT_SECRET:-autosupport-production-secure-jwt-secret-key-32chars}
+      JWT_EXPIRES_IN: 7d
+      LLM_PROVIDER: ${LLM_PROVIDER:-mock}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      EMBEDDING_MODEL: text-embedding-004
+      CHAT_MODEL: gemini-1.5-flash
+      LLM_TIMEOUT_MS: 20000
+      LLM_RETRY_ATTEMPTS: 2
+      LOG_LEVEL: info
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:4000/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    networks:
+      - autosupport-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:4000/api
+    container_name: autosupport-frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: http://localhost:4000/api
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - autosupport-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  autosupport-network:
+    driver: bridge
