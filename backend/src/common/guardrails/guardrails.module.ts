@@ -8,7 +8,7 @@ import { GuardrailsService } from './guardrails.service';
  * KnowledgeModule) can inject it without re-declaring the provider.
  *
  * Architecture note: Keeping guardrails in `common/` signals it is a
- * cross-cutting concernï¿½just like auth guards or exception filtersï¿½not tied
+ * cross-cutting concern—just like auth guards or exception filters—not tied
  * to any single business domain.
  */
 @Module({
